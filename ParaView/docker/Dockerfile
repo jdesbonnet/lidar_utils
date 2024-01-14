@@ -8,7 +8,9 @@ RUN apt-get install -y build-essential byacc flex freeglut3-dev libbz2-dev  libf
 RUN apt-get install -y libglx-dev git cmake ninja-build
 RUN apt-get install -y python3 python3-all-dev libtbb-dev mpi-default-dev
 
+# Verified to work with commit 496bfed1b6bf16fd25d51711c87bd32b9e52b862 (HEAD -> master, origin/master, origin/HEAD)
 RUN git clone https://gitlab.kitware.com/LidarView/paraview
+
 RUN cd paraview; git submodule update --init --recursive
 RUN mkdir paraview_build
 
@@ -22,7 +24,6 @@ RUN cd paraview_build; cmake -GNinja -DPARAVIEW_USE_PYTHON=ON -DPARAVIEW_USE_MPI
 # Got config working, now problems with xmlpatterns
 # https://askubuntu.com/questions/1454926/xmlpatterns-could-not-find-a-qt-installation-of
 # https://github.com/easybuilders/easybuild-easyconfigs/issues/6302
-
 RUN apt install -y libqt5xmlpatterns5-dev qtxmlpatterns5-dev-tools
 
 #RUN cd paraview_build; cmake --build . -j
