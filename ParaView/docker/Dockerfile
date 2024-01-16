@@ -26,7 +26,17 @@ RUN cd paraview_build; cmake -GNinja -DPARAVIEW_USE_PYTHON=ON -DPARAVIEW_USE_MPI
 # https://github.com/easybuilders/easybuild-easyconfigs/issues/6302
 RUN apt install -y libqt5xmlpatterns5-dev qtxmlpatterns5-dev-tools
 
-#RUN cd paraview_build; cmake --build . -j
+RUN cd paraview_build; cmake --build . -j
 
  
+##
+## LidarView
+##
+#export ParaView_DIR=/opt/kitware/paraview_build
+#RUN apt install -y libpcap-dev libeigen3-dev libyaml-cpp-dev 
+#RUN apt install -y libboost-dev libboost-atomic-dev libboost-filesystem-dev libboost-program-options-dev libboost-thread-dev
+#RUN apt-get install libgl1-mesa-glx libgl1-mesa-dev
+
+# maybe?
+#RUN apt install -y python3-pyqt5 pyqt5-dev 
 

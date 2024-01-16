@@ -1,0 +1,35 @@
+FROM ubuntu:18.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update
+RUN apt install -y lsb-release curl sudo git cmake x11-apps build-essential
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | sudo apt-key add -
+
+#RUN apt install -y ros-core libeigen3-dev libopencv-dev libgeometry-msgs-dev libnav-msgs-dev libsensor-msgs-dev libroscpp-dev
+
+RUN mkdir -p /opt/livox/src
+WORKDIR /opt/livox/src
+RUN git clone https://github.com/Livox-SDK/livox_mapping
+# https://github.com/udacity/CarND-Capstone/issues/125
+#RUN apt install -y libpcl-dev pcl-tools
+RUN apt update
+RUN apt install -y ros-melodic-desktop-full
+WORKDIR /opt/livox
+#RUN source /opt/ros/melodic/setup.bash; catkin_make
+
+
+RUN git clone https://github.com/Livox-SDK/livox_ros_driver.git ws_livox/src
+
+COPY build.sh .
+
+
+RUN apt-get install -y build-essential byacc flex freeglut3-dev libbz2-dev  libffi-dev libfontconfig1-dev libfreetype6-dev libnl-genl-3-dev libopengl0  libprotobuf-dev libx11-dev libx11-xcb-dev libx11-xcb-dev libxcb-glx0-dev  libxcb-glx0-dev libxcb-icccm4-dev libxcb-image0-dev libxcb-keysyms1-dev  libxcb-randr0-dev libxcb-render-util0-dev libxcb-shape0-dev libxcb-shm0-dev libxcb-sync-dev libxcb-util-dev libxcb-xfixes0-dev libxcb-xinerama0-dev  libxcb-xkb-dev libxcb1-dev libxext-dev libxext-dev libxfixes-dev libxi-dev  libxkbcommon-dev libxkbcommon-dev libxkbcommon-x11-dev libxkbcommon-x11-dev  libxrender-dev libxt-dev pkg-config protobuf-compiler zlib1g-dev
+
+#RUN apt-get install -y libglx-dev git 
+
+
+# glxinfo / glxgears does not work 
+
+
+
+

@@ -1,0 +1,17 @@
+FROM ubuntu:16.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt update
+RUN apt install -y git cmake x11-apps build-essential
+RUN apt install -y ros-core libeigen3-dev libopencv-dev libgeometry-msgs-dev libnav-msgs-dev libsensor-msgs-dev libroscpp-dev
+
+RUN mkdir -p /opt/livox/src
+WORKDIR /opt/livox/src
+RUN git clone https://github.com/Livox-SDK/livox_mapping
+# https://github.com/udacity/CarND-Capstone/issues/125
+RUN apt install -y libpcl-dev pcl-tools
+
+
+
+
+
+
