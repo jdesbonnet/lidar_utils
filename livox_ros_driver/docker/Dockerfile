@@ -17,6 +17,8 @@
 # Documentation:
 # https://github.com/Livox-SDK/livox_ros_driver for documentation.
 #
+# Remark:
+# Not image nvidia/opengl:1.2-glvnd-devel-ubuntu18.04 available for ARM64.
 
 FROM nvidia/opengl:1.2-glvnd-devel-ubuntu18.04
 
