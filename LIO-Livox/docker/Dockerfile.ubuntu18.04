@@ -1,0 +1,36 @@
+# Livox-SDK
+# Confirmed to work on Raspberry Pi 5 / Ubuntu 22.04 host OS
+# Remark: add --network=host to the docker run command so that
+# the Lidar sensor can be detected on the network.
+# Tested with commit 9306596a2bf15c1343bc023b497465ed0a32909d
+
+FROM ubuntu:18.04
+
+# Supress any interactive prompts (eg for TimeZone) during installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update
+
+RUN apt install -y lsb-release curl gnupg2 sudo git cmake build-essential
+
+RUN mkdir /opt/livox
+WORKDIR /opt/livox
+
+RUN git clone https://github.com/Livox-SDK/Livox-SDK.git
+RUN cd Livox-SDK; mkdir build; cd build && cmake ..; make -j
+#sudo make install
+
+RUN apt install -y libeigen3-dev libceres-dev libsuitesparse-dev
+RUN apt install -y libpcl-dev
+
+
+RUN sh -c 'echo "deb http://packages.ros.org/ros/ubuntu $(lsb_release -sc) main" > /etc/apt/sources.list.d/ros-latest.list'
+RUN apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+RUN apt update
+RUN apt install -y ros-melodic-desktop-full
+
+RUN git clone https://github.com/Livox-SDK/livox_ros_driver.git ws_livox/src
+#RUN source /opt/ros/melodic/setup.bash ; cd ws_livox ; catkin_make
+RUN echo 'source /opt/ros/melodic/setup.bash ; cd ws_livox ; catkin_make' > build.sh; bash build.sh 
+
+
