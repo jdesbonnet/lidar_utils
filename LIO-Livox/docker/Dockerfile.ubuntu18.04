@@ -26,3 +26,5 @@ RUN apt install -y ros-melodic-desktop-full
 RUN git clone https://github.com/Livox-SDK/livox_ros_driver.git ws_livox/src
 #RUN source /opt/ros/melodic/setup.bash ; cd ws_livox ; catkin_make
 RUN echo 'source /opt/ros/melodic/setup.bash ; cd ws_livox ; catkin_make' > build.sh; bash build.sh 
+RUN cd ws_livox/src; git clone https://github.com/Livox-SDK/LIO-Livox
+RUN echo 'source /opt/ros/melodic/setup.bash ; cd ws_livox ; catkin_make' > build.sh; bash build.sh
