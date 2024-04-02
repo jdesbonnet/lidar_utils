@@ -5,7 +5,7 @@
 #define PI 3.14159265359
 
 /**
- * Decode Livox LVX (1.x) files.
+ * Decode Livox LVX (1.1) files.
  * 
  * Specification:
  * https://www.livoxtech.com/3296f540ecf5458a8829e01cf429798e/downloads/Livox%20Viewer/LVX%20Specifications%20EN_20190924.pdf
@@ -27,16 +27,19 @@
  * Point cloud data block:
  *   * Sequence of frames. Each frame comprises 'packages'. Each package comprises points.
  *
+ * For gcc compiler it's important to add __attribute__((__packed__)) to ensure there
+ * is no padding. 
  *
  * @author Joe Desbonnet
  */
 
+
+/**
+ * File header
+ */
 typedef struct __attribute__((__packed__)) {
 	char signature[16];
-	char version_a;
-	char version_b;
-	char version_c;
-	char version_d;
+	uint32_t format_version;
 	uint32_t magic;
 } lvx_header_t;
 
@@ -105,10 +108,34 @@ typedef struct __attribute__((__packed__)) {
 int main (int argc, char **argv) {
 	int i, len, c, prevc;
 	int bytes_read = 0;
+	long time_offset = 0;
 
 	lvx_header_t header;
 	fread (&header, sizeof(header), 1,stdin);
-	fprintf (stdout, "public header: signature=%s magic=%x a=%x b=%x c=%x d=%x\n", header.signature, header.magic, header.version_a, header.version_b, header.version_c, header.version_d);
+
+
+	// 
+	// Check if it looks like a valid LVX 1.1 file
+	//
+
+	if (  ! (header.signature[0]=='l' && header.signature[1]=='i' && header.signature[2]=='v') ) {
+		fprintf (stderr,"unrecognized file signature version %s, expecting 'livox_tech' \n",header.signature);
+		return -1;
+	}
+
+	if (header.format_version != 0x0101) {
+		fprintf (stderr,"unrecognized file format version %08x\n",header.format_version);
+		return -1;
+	}
+
+	if (header.magic != 0xAC0EA767) {
+		fprintf (stderr,"unrecognized file magic number %08x, expecting 0xAC0EA767\n",header.magic);
+		return -1;
+	}
+ 
+
+
+	fprintf (stdout, "public header: signature=%s magic=%x format_version=%08x\n", header.signature, header.magic, header.format_version);
 	bytes_read += sizeof(header);
 
 	fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
@@ -150,13 +177,13 @@ int main (int argc, char **argv) {
 		bytes_read += sizeof(frame_header);
 		fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
 
-		fprintf (stdout, "Frame header: file_offset=%lu frame_length=%ld next_frame=%ld\n", frame_header.offset, (frame_header.offset_next - frame_header.offset), frame_header.offset_next );
+		fprintf (stdout, "Frame: file_offset=%lu frame_length=%ld next_frame=%ld time_offset_ms=%ld\n", frame_header.offset, (frame_header.offset_next - frame_header.offset), frame_header.offset_next, time_offset );
 
 
 		do {
 			fread (&package_header, sizeof(package_header), 1,stdin);
 			bytes_read += sizeof(package_header);
-			fprintf (stdout, "Package header:    version=%d timestamp=%ld data_type=%d\n", package_header.version, package_header.timestamp, package_header.data_type);
+			fprintf (stdout, "Package:    version=%d timestamp=%ld data_type=%d\n", package_header.version, package_header.timestamp, package_header.data_type);
 			int points_per_package;
 			switch (package_header.data_type) {
 				case 0:
@@ -190,9 +217,11 @@ int main (int argc, char **argv) {
 				}
 			}
 
-			fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
+			//fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
+
+			
 		} while (bytes_read < frame_header.offset_next);
 
-
+		time_offset += header_private.frame_duration;
 	}
 }
