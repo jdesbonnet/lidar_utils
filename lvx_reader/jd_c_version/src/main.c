@@ -61,13 +61,13 @@ typedef struct __attribute__((__packed__)) {
 	float X;
 	float Y;
 	float Z;
-} lvx2_device_info_t;
+} lvx_device_info_t;
 
 typedef struct __attribute__((__packed__)) {
 	uint64_t offset;
 	uint64_t offset_next;
 	uint64_t frame_index;
-} lvx2_pc_frame_header_t;
+} lvx_frame_header_t;
 
 
 typedef struct __attribute__((__packed__)) {
@@ -80,14 +80,8 @@ typedef struct __attribute__((__packed__)) {
 	uint8_t timestamp_type;
 	uint8_t data_type;
 	uint64_t timestamp;
-} lvx1_pc_package_header_t;
+} lvx_package_header_t;
 
-typedef struct __attribute__((__packed__)) {
-	float x;
-	float y;
-	float z;
-	uint8_t reflectivity;
-} lvx1_pc_point_t;
 
 typedef struct __attribute__((__packed__)) {
 	uint32_t x_mm;
@@ -105,14 +99,6 @@ typedef struct __attribute__((__packed__)) {
 	float acc_y;
 	float acc_z;
 } lvx_point6_t;
-
-typedef struct __attribute__((__packed__)) {
-	uint16_t x_cm;
-	uint16_t y_cm;
-	uint16_t z_cm;
-	uint8_t reflectivity;
-	uint8_t tag;
-} lvx2_pc_point2_t;
 
 
 
@@ -137,14 +123,14 @@ int main (int argc, char **argv) {
 	fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
 
 
-	lvx2_device_info_t devinfo;
+	lvx_device_info_t devinfo;
 	for (i = 0; i < header_private.device_count; i++) {
-		fread (&devinfo, sizeof(lvx2_device_info_t), 1,stdin);
+		fread (&devinfo, sizeof(devinfo), 1,stdin);
 		fprintf (stdout, "Device[%d] SN=%s lidar_id=%x device_type=%x extrinsic_enable=%d roll=%f pitch=%f yaw=%f x=%f y=%f z=%f\n", i, 
 			devinfo.lidar_sn, devinfo.lidar_index, devinfo.device_type, devinfo.extrinsic_enable,
 			devinfo.roll, devinfo.pitch, devinfo.yaw, devinfo.X, devinfo.Y, devinfo.Z
 		);
-		bytes_read += sizeof(lvx2_device_info_t);
+		bytes_read += sizeof(devinfo);
 	}
 
 	fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
@@ -155,8 +141,8 @@ int main (int argc, char **argv) {
 	// Read point data - this is a sequence of frames. Each 'frame' comprises a sequence of 'packages'.
 	//
 
-	lvx2_pc_frame_header_t frame_header;
-	lvx1_pc_package_header_t package_header;
+	lvx_frame_header_t   frame_header;
+	lvx_package_header_t package_header;
 
 	while ( ! feof (stdin) ) {
 
