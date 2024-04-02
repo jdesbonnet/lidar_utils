@@ -27,6 +27,7 @@
  * Point cloud data block:
  *   * Sequence of frames. Each frame comprises 'packages'. Each package comprises points.
  *
+ *
  * @author Joe Desbonnet
  */
 
@@ -175,7 +176,7 @@ int main (int argc, char **argv) {
 	lvx2_device_info_t devinfo;
 	for (i = 0; i < header_private.device_count; i++) {
 		fread (&devinfo, sizeof(lvx2_device_info_t), 1,stdin);
-		fprintf (stdout, "Device[%d] SN=%s lidar_id=%x device_type=%x extrinsic_enable=%d roll=%f pitch=%f yaw=%f x=%f y=%f z=%f\n", i, 
+		fprintf (stdout, "Device[%d] SN=%s lidar_id=%x device_type=%x extrinsic_enable=%d roll=%f pitch=%f yaw=%f x=%f y=%f z=%f\n", i, q
 			devinfo.lidar_sn, devinfo.lidar_index, devinfo.device_type, devinfo.extrinsic_enable,
 			devinfo.roll, devinfo.pitch, devinfo.yaw, devinfo.X, devinfo.Y, devinfo.Z
 		);
