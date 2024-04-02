@@ -38,7 +38,7 @@ typedef struct __attribute__((__packed__)) {
 	char version_c;
 	char version_d;
 	uint32_t magic;
-} lvx1_header_t;
+} lvx_header_t;
 
 /**
  * Unclear why this is called 'private'
@@ -46,22 +46,8 @@ typedef struct __attribute__((__packed__)) {
 typedef struct __attribute__((__packed__)) {
 	uint32_t frame_duration;
 	uint8_t device_count;
-} lvx2_header_private_t;
+} lvx_header_private_t;
 
-/*
-typedef struct __attribute__((__packed__)) {
-	char lidar_sn[16];
-	char hub_sn[16];
-	char device_index;
-	char device_type;
-	float extrinsic_roll;
-	float extrinsic_pitch;
-	float extrinsic_yaw;
-	float extrinsic_X;
-	float extrinsic_Y;
-	float extrinsic_Z;
-} lvx1_device_info_t;
-*/
 
 typedef struct __attribute__((__packed__)) {
 	char lidar_sn[16];
@@ -76,15 +62,6 @@ typedef struct __attribute__((__packed__)) {
 	float Y;
 	float Z;
 } lvx2_device_info_t;
-
-/*
-typedef struct __attribute__((__packed__)) {
-	uint64_t offset;
-	uint64_t offset_next;
-	uint64_t frame_index;
-	uint64_t package_count;
-} lvx1_pc_frame_header_t;
-*/
 
 typedef struct __attribute__((__packed__)) {
 	uint64_t offset;
@@ -104,21 +81,6 @@ typedef struct __attribute__((__packed__)) {
 	uint8_t data_type;
 	uint64_t timestamp;
 } lvx1_pc_package_header_t;
-
-/*
-typedef struct __attribute__((__packed__)) {
-	uint8_t version;
-	uint32_t lidar_id;
-	uint8_t lidar_type;
-	uint8_t timestamp_type;
-	uint8_t timestamp[8];
-	uint16_t udp_counter;
-	uint8_t data_type;
-	uint32_t length;
-	uint8_t frame_counter;
-	uint8_t reserved[4];
-} lvx2_pc_package_header_t;
-*/
 
 typedef struct __attribute__((__packed__)) {
 	float x;
@@ -158,18 +120,18 @@ int main (int argc, char **argv) {
 	int i, len, c, prevc;
 	int bytes_read = 0;
 
-	lvx1_header_t header;
-	fread (&header, sizeof(lvx1_header_t), 1,stdin);
+	lvx_header_t header;
+	fread (&header, sizeof(header), 1,stdin);
 	fprintf (stdout, "public header: signature=%s magic=%x a=%x b=%x c=%x d=%x\n", header.signature, header.magic, header.version_a, header.version_b, header.version_c, header.version_d);
-	bytes_read += sizeof(lvx1_header_t);
+	bytes_read += sizeof(header);
 
 	fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
 
 
-	lvx2_header_private_t header_private;
-	fread (&header_private, sizeof(lvx2_header_private_t), 1,stdin);
+	lvx_header_private_t header_private;
+	fread (&header_private, sizeof(header_private), 1,stdin);
 	fprintf (stdout, "private header: frame_duration=%d device_count=%d\n", header_private.frame_duration, header_private.device_count);
-	bytes_read += sizeof(lvx2_header_private_t);
+	bytes_read += sizeof(header_private);
 
 
 	fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
