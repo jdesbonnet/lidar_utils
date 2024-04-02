@@ -133,7 +133,16 @@ typedef struct __attribute__((__packed__)) {
 	uint32_t z_mm;
 	uint8_t reflectivity;
 	uint8_t tag;
-} lvx2_pc_point1_t;
+} lvx_point2_t;
+
+typedef struct __attribute__((__packed__)) {
+	float gyro_x;
+	float gyro_y;
+	float gyro_z;
+	float acc_x;
+	float acc_y;
+	float acc_z;
+} lvx_point6_t;
 
 typedef struct __attribute__((__packed__)) {
 	uint16_t x_cm;
@@ -143,13 +152,6 @@ typedef struct __attribute__((__packed__)) {
 	uint8_t tag;
 } lvx2_pc_point2_t;
 
-
-typedef struct __attribute__((__packed__)) {
-	uint32_t word0;
-	uint32_t word1;
-	uint32_t word2;
-	uint32_t word3;
-} lvx_test_t;
 
 
 int main (int argc, char **argv) {
@@ -176,7 +178,7 @@ int main (int argc, char **argv) {
 	lvx2_device_info_t devinfo;
 	for (i = 0; i < header_private.device_count; i++) {
 		fread (&devinfo, sizeof(lvx2_device_info_t), 1,stdin);
-		fprintf (stdout, "Device[%d] SN=%s lidar_id=%x device_type=%x extrinsic_enable=%d roll=%f pitch=%f yaw=%f x=%f y=%f z=%f\n", i, q
+		fprintf (stdout, "Device[%d] SN=%s lidar_id=%x device_type=%x extrinsic_enable=%d roll=%f pitch=%f yaw=%f x=%f y=%f z=%f\n", i, 
 			devinfo.lidar_sn, devinfo.lidar_index, devinfo.device_type, devinfo.extrinsic_enable,
 			devinfo.roll, devinfo.pitch, devinfo.yaw, devinfo.X, devinfo.Y, devinfo.Z
 		);
@@ -203,11 +205,45 @@ int main (int argc, char **argv) {
 		fprintf (stdout, "Frame header: file_offset=%lu frame_length=%ld next_frame=%ld\n", frame_header.offset, (frame_header.offset_next - frame_header.offset), frame_header.offset_next );
 
 
-		for (i = 0; i < 16; i++) {
+		do {
 			fread (&package_header, sizeof(package_header), 1,stdin);
+			bytes_read += sizeof(package_header);
 			fprintf (stdout, "Package header:    version=%d timestamp=%ld data_type=%d\n", package_header.version, package_header.timestamp, package_header.data_type);
-			//int numPoints = package
-		}
+			int points_per_package;
+			switch (package_header.data_type) {
+				case 0:
+				case 1:
+					points_per_package = 100;
+					break;
+				case 2:
+				case 3: {
+					points_per_package = 96;
+					lvx_point2_t point;
+					for (int i = 0; i < points_per_package; i++) {
+						fread (&point, sizeof(point), 1,stdin);
+						bytes_read += sizeof(point);
+						//fprintf (stdout,"%d %d %d %d %d\n", point.x_mm, point.y_mm, point.z_mm, point.reflectivity, point.tag);
+					}
+					break;
+				}
+				case 4:
+				case 5:
+					points_per_package = 48;
+					break;
+				case 6: {
+					points_per_package = 1;
+					lvx_point6_t point;
+					for (int i = 0; i < points_per_package; i++) {
+						fread (&point, sizeof(point), 1,stdin);
+						bytes_read += sizeof(point);
+						//fprintf (stdout,"%d %d %d %d %d\n", point.x_mm, point.y_mm, point.z_mm, point.reflectivity, point.tag);
+					}
+					break;
+				}
+			}
+
+			fprintf (stdout, "bytes_read=%d (0x%x)\n", bytes_read, bytes_read);
+		} while (bytes_read < frame_header.offset_next);
 
 
 	}
