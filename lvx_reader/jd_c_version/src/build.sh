@@ -1,6 +1,8 @@
 #!/bin/bash
+CFLAGS=""
 
-gcc -O0 -o lvx_reader main.c
-gcc -O0 -o lvx_split split.c
+gcc -c lvx.c
+gcc $CFLAGS -o lvx_read main.c
+gcc $CFLAGS -o lvx_split split.c
  
 

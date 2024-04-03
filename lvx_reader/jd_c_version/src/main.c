@@ -101,7 +101,9 @@ int main (int argc, char **argv) {
 	while ( ! feof (stdin) ) {
 
 		fread (&frame_header, sizeof(frame_header), 1,stdin);
-		fprintf (stdout, "Frame: file_offset=%lu frame_length=%ld next_frame=%ld time_offset_ms=%ld\n", frame_header.offset, (frame_header.offset_next - frame_header.offset), frame_header.offset_next, time_offset );
+		fprintf (stdout, "FRAME: bytes_read=%lu  header.offset=%lu  header.next_frame=%ld  frame_length=%ld  time_offset_ms=%ld\n", 
+			bytes_read,
+			frame_header.offset, frame_header.offset_next, (frame_header.offset_next - frame_header.offset),  time_offset );
 
 		bytes_read += sizeof(frame_header);
 		fprintf (stdout, "bytes_read=%ld (0x%lx)\n", bytes_read, bytes_read);

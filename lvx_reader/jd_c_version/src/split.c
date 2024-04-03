@@ -95,6 +95,10 @@ int main (int argc, char **argv) {
 	char filenamebuf[80];
 	uint64_t bytes_written = 0;
 	uint64_t chunk_time_offset = 0;
+	uint64_t frame_index = 0;
+
+	// The *data* position in the original file corresponding to the start of the current chunk
+	uint64_t chunk_offset = 88;
 
 	sprintf (filenamebuf, "part-%08d.lvx", chunk_number);
 
@@ -131,18 +135,20 @@ int main (int argc, char **argv) {
 	uint64_t new_offset_next;
 	uint64_t new_frame_index;
 
+	int items_written;
+
 	while ( ! feof (stdin) ) {
 
 		fread (&frame_header, sizeof(frame_header), 1,stdin);
 
 		if (feof(stdin)) {
-			fprintf (stderr,"ERROR: feof after frame header read\n");
 			break;
 		}
 
 		uint64_t frame_size = (frame_header.offset_next - frame_header.offset);
 
-		fprintf (stdout, "Frame: file_offset=%lu frame_length=%ld next_frame=%ld time_offset_ms=%ld\n", frame_header.offset, (frame_header.offset_next - frame_header.offset), frame_header.offset_next, time_offset );
+		fprintf (stdout, "Frame: file_offset=%lu frame_length=%ld next_frame=%ld time_offset_ms=%ld\n", 
+			frame_header.offset, (frame_header.offset_next - frame_header.offset), frame_header.offset_next, time_offset );
 
 		if (frame_size > max_frame_size) {
 			fprintf (stderr,"ERROR: max frame size (%ld bytes) exceeded\n",max_frame_size);
@@ -161,7 +167,7 @@ int main (int argc, char **argv) {
 		// Let's try something different
 		new_offset = bytes_written;
 		new_offset_next = new_offset + frame_size;
-		new_frame_index = frame_header.frame_index;
+		new_frame_index = frame_index++;
 
 		fprintf (stdout, "new_offset=%ld new_offset_next=%ld\n", new_offset, new_offset_next);
 
@@ -173,7 +179,11 @@ int main (int argc, char **argv) {
 
 		// Read the remaining content of frame and write back verbatim
 		fread  (&frame_buffer, frame_size - sizeof(frame_header), 1, stdin);
-		fwrite (&frame_buffer, frame_size - sizeof(frame_header), 1, chunkf);
+		items_written = fwrite (&frame_buffer, frame_size - sizeof(frame_header), 1, chunkf);
+		if (items_written != 1) {
+			fprintf (stdout,"ERROR: anomaly, error writing frame data\n");
+			return -1;
+		}
 
 		bytes_read    += (frame_size - sizeof(frame_header));
 		bytes_written += (frame_size - sizeof(frame_header));
@@ -184,9 +194,9 @@ int main (int argc, char **argv) {
 				frame_header.offset_next, bytes_read, frame_header.offset_next - bytes_read);
 			return -1;
 		}
-		if (bytes_written != frame_header.offset_next) {
+		if ( (chunk_offset+bytes_written-88) != frame_header.offset_next) {
 			fprintf (stdout,"WARNING: anomaly, frame_header.offset_next not consistent with bytes written: expecting %lu from frame header but got %lu bytes written, diff %ld\n", 
-				frame_header.offset_next, bytes_written, frame_header.offset_next - bytes_written);
+				frame_header.offset_next, chunk_offset+bytes_written-88, frame_header.offset_next - (chunk_offset+bytes_written-88));
 			return -1;
 		}
 
@@ -194,10 +204,16 @@ int main (int argc, char **argv) {
 		time_offset       += header_private.frame_duration;
 		chunk_time_offset += header_private.frame_duration;
 
+
+		// Close current chunk, open another
 		if (chunk_time_offset >= 300000) {
+
 			fclose (chunkf);
+			chunk_offset = bytes_read;
+
 			bytes_written = 0;
 			chunk_time_offset = 0;
+			frame_index = 0; 
 			chunk_number++;
 			sprintf (filenamebuf, "part-%08d.lvx", chunk_number);
 			chunkf = fopen(filenamebuf, "wb");
@@ -211,6 +227,9 @@ int main (int argc, char **argv) {
 				fwrite (&devinfo, sizeof(lvx_device_info_t), 1, chunkf);
 				bytes_written += sizeof(lvx_device_info_t);
 			}
+
+
+
 		}
 
 
