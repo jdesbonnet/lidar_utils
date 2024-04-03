@@ -37,7 +37,15 @@ typedef struct __attribute__((__packed__)) {
 	float Z;
 } lvx_device_info_t;
 
+/*
 typedef struct __attribute__((__packed__)) {
+	uint64_t offset;
+	uint64_t offset_next;
+	uint64_t frame_index;
+} lvx_frame_header_t;
+*/
+
+typedef struct {
 	uint64_t offset;
 	uint64_t offset_next;
 	uint64_t frame_index;

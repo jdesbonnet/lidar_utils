@@ -127,6 +127,10 @@ int main (int argc, char **argv) {
 	lvx_frame_header_t   frame_header;
 	lvx_package_header_t package_header;
 
+	uint64_t new_offset;
+	uint64_t new_offset_next;
+	uint64_t new_frame_index;
+
 	while ( ! feof (stdin) ) {
 
 		fread (&frame_header, sizeof(frame_header), 1,stdin);
@@ -149,20 +153,45 @@ int main (int argc, char **argv) {
 		fprintf (stdout, "bytes_read=%ld (0x%lx)\n", bytes_read, bytes_read);
 
 
-		// This casues problems
+		// Writing these properties corrupts the frame_header: why?!
 		//frame_header.offset = bytes_written;
 		//frame_header.offset_next = bytes_written + frame_size;
+		//fwrite (&frame_header, sizeof(frame_header), 1, chunkf);
 
-		fwrite (&frame_header, sizeof(frame_header), 1, chunkf);
+		// Let's try something different
+		new_offset = bytes_written;
+		new_offset_next = new_offset + frame_size;
+		new_frame_index = frame_header.frame_index;
 
-		fread (&frame_buffer, frame_size - sizeof(frame_header), 1, stdin);
+		fprintf (stdout, "new_offset=%ld new_offset_next=%ld\n", new_offset, new_offset_next);
+
+		fwrite (&new_offset, sizeof(uint64_t), 1, chunkf);
+		fwrite (&new_offset_next, sizeof(uint64_t), 1, chunkf);
+		fwrite (&new_frame_index, sizeof(uint64_t), 1, chunkf);
+		bytes_written += sizeof(uint64_t)*3;
+
+
+		// Read the remaining content of frame and write back verbatim
+		fread  (&frame_buffer, frame_size - sizeof(frame_header), 1, stdin);
 		fwrite (&frame_buffer, frame_size - sizeof(frame_header), 1, chunkf);
 
-		bytes_read += (frame_size - sizeof(frame_header));
+		bytes_read    += (frame_size - sizeof(frame_header));
 		bytes_written += (frame_size - sizeof(frame_header));
 		fprintf (stdout, "bytes_read=%ld (0x%lx)\n", bytes_read, bytes_read);
 
-		time_offset += header_private.frame_duration;
+		if (bytes_read != frame_header.offset_next) {
+			fprintf (stdout,"WARNING: anomaly, frame_header.offset_next not consistent with bytes read: expecting %lu from frame header but got %lu bytes read, diff %ld\n", 
+				frame_header.offset_next, bytes_read, frame_header.offset_next - bytes_read);
+			return -1;
+		}
+		if (bytes_written != frame_header.offset_next) {
+			fprintf (stdout,"WARNING: anomaly, frame_header.offset_next not consistent with bytes written: expecting %lu from frame header but got %lu bytes written, diff %ld\n", 
+				frame_header.offset_next, bytes_written, frame_header.offset_next - bytes_written);
+			return -1;
+		}
+
+
+		time_offset       += header_private.frame_duration;
 		chunk_time_offset += header_private.frame_duration;
 
 		if (chunk_time_offset >= 300000) {
@@ -177,6 +206,7 @@ int main (int argc, char **argv) {
 
 			fwrite (&header_private, sizeof(header_private), 1, chunkf);
 			bytes_written += sizeof(header_private);
+
 			for (i = 0; i < header_private.device_count; i++) {
 				fwrite (&devinfo, sizeof(lvx_device_info_t), 1, chunkf);
 				bytes_written += sizeof(lvx_device_info_t);
